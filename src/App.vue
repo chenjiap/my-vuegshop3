@@ -11,7 +11,11 @@ export default {
   
   components: {
       FooterGuide
-  }
+  },
+  mounted () {
+      // 异步获取地址
+      this.$store.dispatch('getAddress')
+    },
 }
 
 </script>
