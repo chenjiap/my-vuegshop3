@@ -35,7 +35,9 @@ VeeValidate.Validator.localize('zh_CN', {
     attributes: {
       name: '用户名',
       phone: '手机号',
-      code: '验证码'
+      code: '验证码',
+      pwd: '密码',
+      captcha:'图形验证码'
     }
   })
 

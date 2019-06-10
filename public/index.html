@@ -9,16 +9,30 @@
     <!-- <link rel="stylesheet" href="http://at.alicdn.com/t/font_1227095_ueskkdyx9r.css"> -->
     <link rel="stylesheet" href="http://at.alicdn.com/t/font_518606_6676bmcalnrhehfr.css">
     <link rel="stylesheet" href="/css/reset.css">
+    <script src="https://as.alipayobjects.com/g/component/fastclick/1.0.6/fastclick.js"></script>
+    <script>
+      if ('addEventListener' in document) {
+        document.addEventListener('DOMContentLoaded', function () {
+          FastClick.attach(document.body);
+        }, false);
+      }
+    </script>
+    <style>
+      * {
+  touch-action: pan-y;
+}
+    </style>
   </head>
   <body>
     <div id="app"></div>
-    <script src="https://as.alipayobjects.com/g/component/fastclick/1.0.6/fastclick.js"></script>
+    
+    <!-- <script src="https://as.alipayobjects.com/g/component/fastclick/1.0.6/fastclick.js"></script>
 <script>
   if ('addEventListener' in document) {
     document.addEventListener('DOMContentLoaded', function() {
       FastClick.attach(document.body);
     }, false);
-  }
+  } -->
 </script>
 
   </body>

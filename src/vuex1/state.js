@@ -7,6 +7,7 @@ export default {
     address: {}, // 当前地址信息对象
     categorys: [], // 商品分类的数组
     shops: [], // 商家数组
+    user:{}
   }
 
 

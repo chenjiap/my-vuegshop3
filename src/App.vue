@@ -7,14 +7,28 @@
 
 <script>
  import FooterGuide from './components/FooterGuide/FooterGuide.vue'
+
+//一天免登陆
+ import {reqUser} from './api'
+  import {RECEIVE_USER} from './vuex/mutation-types'
 export default {
   
   components: {
       FooterGuide
   },
-  mounted () {
+  async mounted () {
       // 异步获取地址
       this.$store.dispatch('getAddress')
+
+      // 请求获取用户信息
+      const result = await reqUser()
+      if(result.code===0) {
+        const user = result.data
+        this.$store.commit(RECEIVE_USER, user)
+      }
+
+
+
     },
 }
 

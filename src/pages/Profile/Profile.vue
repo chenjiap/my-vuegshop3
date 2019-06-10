@@ -1,23 +1,30 @@
 <template>
-  <div> <section class="profile">
+  <div> 
+    <section class="profile">
         <!-- <header class="header">
           <a class="header_title">
             <span class="header_title_text">我的</span>
           </a>
         </header> -->
         <Header title='我的'></Header>
-        <section class="profile-number" @click="$router.push('/login')">
+          
+        <!-- /userinfo还没配 -->
+        <section class="profile-number"  @click="$router.push(user._id ? '/userinfo' : '/login')">
           <a href="javascript:" class="profile-link">
             <div class="profile_image">
               <i class="iconfont icon-person"></i>
             </div>
             <div class="user-info">
-              <p class="user-info-top">登录/注册</p>
-              <p>
+              <p class="user-info-top" v-if="!user.phone">
+                 {{user.name ? user.name : '登陆/注册'}}
+              </p>
+              <p v-if="!user.name">
                 <span class="user-icon">
                   <i class="iconfont icon-shouji icon-mobile"></i>
                 </span>
-                <span class="icon-mobile-number">暂无绑定手机号</span>
+                <span class="icon-mobile-number">
+                   {{user.phone ? user.phone : '暂无绑定手机号'}}
+                </span>
               </p>
             </div>
             <span class="arrow">
@@ -93,17 +100,48 @@
             </div>
           </a>
         </section>
-      </section></div>
+
+        <section class="profile_my_order " v-if="user._id">
+          <mt-button type="danger" style="width: 100%" @click="logout">退出登陆</mt-button>
+        </section>   
+
+
+        </section>
+        
+      </div>
 </template>
 
 <script>
-export default {
-  data () {
-    return {
-    };
-  },
+ import { mapState } from 'vuex'
 
-  components: {},
+//退出登陆确认框  
+ import { MessageBox } from 'mint-ui'
+export default {
+ 
+    computed: {
+       
+        // user: {}  未登陆
+        // user: {_id: 12, name: 'zxfjd3g'}  用户名/密码登陆
+        // user: {_id: 12, phone: '13712341234'}  手机号登陆
+      
+      
+     // ...mapState(['user'])
+
+      ...mapState({
+        user: state => state.user.user
+      })
+    },
+    methods: {
+      logout () {
+        MessageBox.confirm('确定退出吗?').then(action => {
+          // 发送退出登陆的请求
+          this.$store.dispatch('logout')
+          //点取消啥也不干
+        }, action => {});
+      }
+    }  
+
+  
 }
 
 </script>

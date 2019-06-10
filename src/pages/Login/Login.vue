@@ -22,7 +22,10 @@
                           > {{computeTime>0 ? `验证码已发送(${computeTime}s)` : '获取验证码'}}</button>
                     </section>
                     <section class="login_verification">
-                        <input type="tel" maxlength="8" placeholder="验证码">
+                        <input type="tel" maxlength="8" placeholder="验证码" v-model="code"
+                        name="code"  v-validate="'required'"
+                        >
+                         <span v-show="errors.has('code')" style="color: red">{{ errors.first('code') }}</span>
                     </section>
                     <section class="login_hint">
                         温馨提示：未注册硅谷外卖帐号的手机号，登录时将自动注册，且代表已同意
@@ -32,15 +35,16 @@
                 <div :class="{on: !loginWay}">
                   <section>
                     <section class="login_message">
-                        <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名"
-                        name="name" v-model="name" v-validate="'required'"
+                        <input type="tel" maxlength="11" placeholder="手机/邮箱/用户名"  v-model="name" 
+                        name="name" v-validate="'required'"
                         >
                          <span v-show="errors.has('name')" style="color: red">{{ errors.first('name') }}</span>
                     </section>
                     <section class="login_verification">
-                         <input :type="isShowPwd ? 'text' : 'password'"  maxlength="8" placeholder="密码"  
-                         v-model="pwd"
+                         <input :type="isShowPwd ? 'text' : 'password'"  maxlength="8" placeholder="密码"    v-model="pwd"
+                          name="pwd" v-validate="'required'"
                          >
+                          <span v-show="errors.has('pwd')" style="color: red">{{ errors.first('pwd') }}</span>
                     <div class="switch_button " 
                     :class="isShowPwd ? 'on' : 'off'" @click="isShowPwd = !isShowPwd">
                         <div class="switch_circle" :class="{right: isShowPwd}"></div>
@@ -48,8 +52,13 @@
                     </div>
                     </section>
                     <section class="login_message">
-                    <input type="text" maxlength="11" placeholder="验证码">
-                    <img class="get_verification" src="./images/captcha.svg" alt="captcha">
+                    <input type="text" maxlength="11" placeholder="验证码"   v-model="captcha"
+                     name="captcha" v-validate="'required'"
+                    >
+                     <span v-show="errors.has('captcha')" style="color: red">{{ errors.first('captcha') }}</span>
+                    <img  ref="captcha"    class="get_verification" src="http://localhost:5000/captcha" alt="captcha" 
+                     @click="updateCaptcha"
+                    >
                     </section>
                   </section>
                 </div>
@@ -57,15 +66,22 @@
             </form>
           <a href="javascript:;" class="about_us">关于我们</a>
         </div>
-        <a href="javascript:" class="go_back">
+        <a href="javascript:" class="go_back" @click="$router.back()">
           <i class="iconfont icon-jiantou2"></i>
         </a>
       </div>
     </section>
+    
   </div>
 </template>
 
 <script>
+import { clearInterval,setInterval } from 'timers'
+
+import {reqSendCode, reqSmsLogin, reqPwdLogin} from '../../api'
+
+import {RECEIVE_USER} from '../../vuex/mutation-types'
+
 export default {
     data () {
       return {
@@ -87,36 +103,84 @@ export default {
       }
     },
      methods: {
-      sendCode () {
+    async  sendCode () {
         // 显示最大值
         this.computeTime = 30
         // 启动循环计时器, 每隔1s减1
-        const intervalId = window.setInterval(() => {
+        const intervalId = setInterval(() => {
           this.computeTime--
           if (this.computeTime<=0) {
             // 停止计时
-            window.clearInterval(intervalId)
+            clearInterval(intervalId)
           }
         }, 1000);
+
+      // 请求发送验证码
+        const result = await reqSendCode(this.phone)
+        if (result.code===0) {
+          alert('短信发送成功')
+        } else {
+          // 停止计时
+          this.computeTime = 0
+          alert(result.msg)
+        }
+
+
+
+
       },
 
 
        async login () {
-        const {loginWay} = this
+         const {loginWay, phone, code, name, pwd, captcha} = this
         let names
         if (loginWay) {
-          names = ['phone']
+          names = ['phone','code']  
         } else {
-          names = ['name']
+          names = ['name','pwd','captcha']
         }
         
         // 进行统一的前台表单验证
         const success = await this.$validator.validateAll(names)
         // 验证通过后发ajax请求
         if (success) {
-          alert('验证通过, 发ajax请求')
+        let result
+          // alert('验证通过, 发ajax请求')
+          if (loginWay) {
+             result = await reqSmsLogin(phone, code)
+          } else {
+            result = await reqPwdLogin({name, pwd, captcha})
+          }
+
+          // 根据请求的结果进行处理
+          if (result.code===0) { // 登陆成功
+            const user = result.data
+            // 保存user
+            this.$store.commit(RECEIVE_USER, user)
+            // 跳转到个人中心
+            this.$router.replace('/profile')
+          } else { // 登陆失败
+            alert(result.msg)
+          }
+
+
+
+
         }
-      }
+      },
+  /* 
+      更新图形验证码
+      */
+     updateCaptcha () {
+       // 给img指定一个新的src路径值, 携带一个时间戳参数
+       this.$refs.captcha.src = 'http://localhost:5000/captcha?time=' + Date.now()
+     }
+
+
+
+
+
+
     },
 
 

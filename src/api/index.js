@@ -14,3 +14,40 @@ export const reqCategorys = () => ajax(BASE + '/index_category')
 
 // 3. 根据经纬度获取商铺列表
 export const reqShops = ( latitude,longitude) => ajax(BASE + '/shops', {latitude, longitude})
+
+
+// 4. 发送短信验证码
+export const reqSendCode = (phone) => ajax(BASE + '/sendcode', {phone})
+
+
+// 5. 手机号/验证码登陆
+export const reqSmsLogin = (phone, code) => ajax(BASE + '/login_sms', {phone, code}, 'POST')
+
+// 6. 用户名/密码/验证码登陆
+export const reqPwdLogin = ({name, pwd, captcha}) => ajax(BASE + '/login_pwd', {name, pwd, captcha}, 'POST')
+
+
+// 7. 获取登陆用户的信息
+export const reqUser = () => ajax(BASE + '/userinfo')
+
+
+// 8. 退出登陆
+export const reqLogout = () => ajax(BASE + '/logout')
+
+
+
+//正常写代码  发ajax请求   因为只有ajax请求才拦截
+/**
+ * 获取商家信息
+ */
+export const reqInfo = () => ajax('/info')
+
+/**
+ * 获取商家评价数组
+ */
+export const reqRatings = () => ajax('/ratings')
+
+/**
+ * 获取商家商品数组
+ */
+export const reqGoods = () => ajax('/goods')

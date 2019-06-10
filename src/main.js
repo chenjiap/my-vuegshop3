@@ -1,4 +1,8 @@
-  import Vue from 'vue'
+ import Vue from 'vue'
+
+
+ import {Button} from 'mint-ui'
+
 import App from './App'
 import router from './router'
 import Header from './components/Header/Header.vue'
@@ -9,11 +13,15 @@ import store from './vuex/store'
 
 import './validate.js'
 
+import './mock/mock-server' 
+
 Vue.config.productionTip = false
 
 // 注册全局组件
 Vue.component('Header', Header)
 Vue.component('Star', Star)
+
+Vue.component(Button.name, Button) // mt-button
 
 /* eslint-disable no-new */
 new Vue({
