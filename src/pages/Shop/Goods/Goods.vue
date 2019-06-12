@@ -2,10 +2,9 @@
   <div>
     <div class="goods">
       <div class="menu-wrapper">
-        <ul>
-          <!-- current -->
+        <ul ref="leftUl">
           <li class="menu-item" v-for="(good, index) in goods" 
-            :key="good.name" @click="clickItem" :class="{current: index===currentIndex}">
+            :key="good.name" @click="clickItem(index)" :class="{current: index===currentIndex}">
             <span class="text bottom-border-1px">
               <img class="icon" v-if="good.icon" :src="good.icon">
               {{good.name}}
@@ -18,7 +17,8 @@
           <li class="food-list-hook" v-for="good in goods" :key="good.name">
             <h1 class="title">{{good.name}}</h1>
             <ul>
-              <li class="food-item bottom-border-1px" v-for="food in good.foods" :key="food.name">
+              <li class="food-item bottom-border-1px" v-for="food in good.foods" 
+                :key="food.name" @click="showFood(food)">
                 <div class="icon">
                   <img width="57" height="57" :src="food.icon">
                 </div>
@@ -33,7 +33,7 @@
                     <span class="old" v-if="food.oldPrice">￥{{food.oldPrice}}</span>
                   </div>
                   <div class="cartcontrol-wrapper">
-                    CartControl组件
+                    <CartControl :food="food"/>
                   </div>
                 </div>
               </li>
@@ -41,13 +41,20 @@
           </li>
         </ul>
       </div>
+
+      <ShopCart/>
     </div>
+    <Food :food="food" ref="food"/>
   </div>
 </template>
 
 <script type="text/ecmascript-6">
-  import BScroll from 'better-scroll'
+ // import BScroll from '@better-scroll/core'
+ import BScroll from 'better-scroll'
   import {mapState} from 'vuex'
+  import Food from './Food'
+  import ShopCart from './ShopCart'
+
   export default {
     name: "Goods",
 
@@ -55,72 +62,132 @@
       return {
         scrollY: 0, // 右侧列表滚动的y轴坐标, 初始值为0, 滚动时实时更新
         tops: [], // 右侧分类的li的top组成的数组, 初始值为[], 列表显示后立即统计并更新tops
+        food: {}, // 需要显示的food
       }
     },
 
-    async mounted () {
-      await this.$store.dispatch("getGoods")
+   async  mounted () {
+     await  this.$store.dispatch("getGoods")
+      
       /* 
-      better-scorll和swiper一样 要先有数据才能滑动
-      实际上2的版本已经处理好了这一点   但我们还是处理一遍  此地选择了方法3
       1. watch + $nextTick()
       2. callbak + $nextTick()
-      3. 利用dispatch返回的promise
+     3. 利用dispatch返回的promise
       */
-      this._initScroll()
-      this._initTops()
+     this._initScroll()
+     this._initTops()
 
     },
+    
 
+    // computed: {
+    //   ...mapState({
+    //     goods: state => state.shop.goods
+    //   }),
+
+    //   /* 
+    //   当前分类的下标
+    //   */
+    //   currentIndex () {
+    //     const {scrollY, tops} = this
+    //     const index = tops.findIndex((top, index) => scrollY>=top && scrollY<tops[index+1])
+    //     //一旦当前分类变化了, 让左侧列表滑动到当前分类处
+    //     if (this.index!==index && this.leftScroll) {
+    //       // 保存最新的
+    //       // eslint-disable-next-line
+    //       this.index = index
+    //       const li = this.$refs.leftUl.children[index]
+    //       this.leftScroll.scrollToElement(li, 500)
+    //       console.log('this.leftScroll.scrollToElement', this.leftScroll.scrollToElement)
+    //     }
+    //     // console.log('index111', index)
+    //     return index
+        
+
+    //   }
+
+        
+    // },
     computed: {
       ...mapState({
         goods: state => state.shop.goods
       }),
 
-      /* 
-      当前分类的下标
-      */
-     currentIndex () {
-       const {scrollY, tops} = this
-       return tops.findIndex((top, index) => scrollY>=top && scrollY<tops[index+1])
-     }
+      // 当前分类的下标
+      currentIndex() {
+        const {scrollY, tops} = this
+        /*
+        findIndex(): 查找到第一个匹配元素的下标
+          [0, 4, 7, 15, 19]
+          7 8 14
+          scrollY>=top && scrollY<nextTop
+         */
+        const index = tops.findIndex((top, index) => scrollY >= top && scrollY < tops[index + 1])
+//debugger
+        if (index !== this.index && this.leftScroll ) {
+          // 保存最新的下标
+          // eslint-disable-next-line
+          this.index = index
+          // 一旦currentIndex发生改变, 将左侧列表滑动到对应的分类项(有可能达不到这个目标, 但至少是在可见范围内的)
+          const li = this.$refs.leftUl.children[index]
+          this.leftScroll.scrollToElement(li, 300)
+          console.log('2222',this.leftScroll.scrollToElement)
+        }
+
+
+        return index
+      }
     },
 
+
     methods: {
-      clickItem () {
-        alert('----')
+      clickItem (index) {
+        // 得到对应的top
+
+         console.log('index222', index)
+        const top = this.tops[index]
+
+        // 立即更新scrollY
+        this.scrollY = top
+        
+        // 让右侧列表滑动到对应的位置
+        this.rightScroll.scrollTo(0, -top, 500)
       },
 
       // 初始化滚动
       _initScroll () {
-        new BScroll('.menu-wrapper', {
-          click: true, // better-scroll 默认会阻止浏览器的原生 click 事件。当设置为 true，better-scroll 会派发一个 click 事件
+        // 创建左侧滚动对象
+        this.leftScroll = new BScroll('.menu-wrapper', {
+          click: true, // 开启分发自定义事件
+          
         })
-        /* 
-        1. 如何触发滑动
-          触摸
-          惯性
-          编码
-        2. 分发事件的频率
-          实时: 间隔时间非常小
-          非实时: 间隔时间较大
+        console.log('this.leftScroll'+this.leftScroll)
+        //  
+        // 1. 如何触发滑动
+        //   触摸
+        //   惯性
+        //   编码
+        // 2. 分发事件的频率
+        //   实时: 间隔时间非常小
+        //   非实时: 间隔时间较大
         
-        */
-        const rightScroll = new BScroll('.foods-wrapper', {
+        // 
+        this.rightScroll = new BScroll('.foods-wrapper', {
           click: true, 
-          probeType: 1, // 非实时, 触摸   触发的没有那么频繁  但是一离手惯性滑动不会触发滑动，所以要知道停止时的y坐标
+          probeType: 1, // 非实时, 触摸
           // probeType: 2, // 实时, 触摸
           // probeType: 3, // 实时  触摸/惯性/编码
         })
-
+        console.log('this.rightScroll',this.rightScroll)
+         console.log('this.rightScroll.scrollToElement',this.rightScroll.scrollToElement)
         // 绑定滚动的事件监听
-        rightScroll.on('scroll', ({x, y}) => {
-          console.log('scroll', x, y)
+        this.rightScroll.on('scroll', ({x, y}) => {
+         // console.log('scroll', x, y)
           this.scrollY = Math.abs(y)
         })
         // 绑定滚动结束的事件监听
-        rightScroll.on('scrollEnd', ({x, y}) => {  // probeType: 1时才需要加
-          console.log('scrollEnd', x, y)
+        this.rightScroll.on('scrollEnd', ({x, y}) => {
+         // console.log('scrollEnd', x, y)
           this.scrollY = Math.abs(y)
         })
       },
@@ -131,15 +198,33 @@
         let top = 0
         tops.push(top)
         // 得到所有右侧分类li
-        const lis = this.$refs.rightUl.children  //ref只能标记一个标签  不能多个
+        const lis = this.$refs.rightUl.children
         Array.prototype.slice.call(lis).forEach(li => {
           top += li.clientHeight
           tops.push(top)
         })
 
-        console.log('tops', tops)
+       // console.log('tops', tops)
         this.tops = tops
+      },
+
+      /* 
+      显示food界面
+      通过ref可以得到原生DOM对象/组件对象
+      父组件调用子组件的方法?  通过ref
+      子组件调用父组件的方法?  传递函数类型的props
+      */
+      showFood (food) {
+        // 更新food数据
+        this.food = food
+        // 显示food组件界面
+        this.$refs.food.toggle()
       }
+    },
+
+    components: {
+      Food,
+      ShopCart
     }
   }
 

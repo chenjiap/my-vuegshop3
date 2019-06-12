@@ -21,6 +21,8 @@
   export default {
     mounted () {
       this.$store.dispatch('getInfo')//让vuex去发请求把商家信息获取了  存状态里
+
+      this.$store.dispatch('getRatings')
     },
     components: {
       ShopHeader
